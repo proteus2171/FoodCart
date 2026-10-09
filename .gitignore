@@ -1,0 +1,7 @@
+# Local secrets and generated dependencies
+.env
+.env.*
+!.env.example
+vendor/
+node_modules/
+frontend/dist/
