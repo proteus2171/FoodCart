@@ -196,7 +196,70 @@ class SetupHotDogCart extends Command
             return;
         }
 
-        $model->clearMediaTag($tag);
-        $model->newMediaInstance()->addFromFile($path, $tag);
+        $uploadPath = $this->makeCleanImageCopy($path);
+
+        try {
+            $model->clearMediaTag($tag);
+            $model->newMediaInstance()->addFromFile($uploadPath, $tag);
+        } finally {
+            if ($uploadPath !== $path && File::exists($uploadPath)) {
+                File::delete($uploadPath);
+            }
+        }
+    }
+
+    /**
+     * TastyIgniter deliberately scans raw image bytes for PHP/Apache payloads.
+     * Generated PNGs can trip that scanner because of embedded metadata or text
+     * chunks, so re-encode them to a clean raster image before attaching them.
+     */
+    private function makeCleanImageCopy(string $path): string
+    {
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if (!in_array($extension, ['png', 'jpg', 'jpeg', 'webp'], true)) {
+            return $path;
+        }
+
+        $tempDir = storage_path('app/foodcart-clean');
+        File::ensureDirectoryExists($tempDir);
+        $tempPath = $tempDir.'/'.uniqid('asset_', true).'.'.$extension;
+
+        if (class_exists(\Imagick::class)) {
+            try {
+                $image = new \Imagick($path);
+                $image->stripImage();
+                $image->setImageFormat($extension === 'jpg' ? 'jpeg' : $extension);
+                $image->writeImage($tempPath);
+                $image->clear();
+                $image->destroy();
+
+                return $tempPath;
+            } catch (\Throwable $e) {
+                if (File::exists($tempPath)) {
+                    File::delete($tempPath);
+                }
+            }
+        }
+
+        if (function_exists('imagecreatefromstring')) {
+            $image = @imagecreatefromstring(File::get($path));
+            if ($image !== false) {
+                $written = match ($extension) {
+                    'png' => imagepng($image, $tempPath, 9),
+                    'jpg', 'jpeg' => imagejpeg($image, $tempPath, 95),
+                    'webp' => function_exists('imagewebp') ? imagewebp($image, $tempPath, 95) : false,
+                    default => false,
+                };
+
+                imagedestroy($image);
+
+                if ($written && File::exists($tempPath)) {
+                    return $tempPath;
+                }
+            }
+        }
+
+        $this->warn('Could not re-encode '.$path.'; trying original image.');
+        return $path;
     }
 }
