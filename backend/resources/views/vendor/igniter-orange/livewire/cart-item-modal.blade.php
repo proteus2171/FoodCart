@@ -1,12 +1,13 @@
 <div
     x-data="OrangeCartItem()"
-    class="modal-dialog modal-lg modal-dialog-centered"
+    class="modal-dialog modal-dialog-centered"
+    style="max-width:760px;width:calc(100% - 24px);"
     data-control="cart-item"
     data-min-quantity="{{ $minQuantity }}"
     data-price-amount="{{ $price }}"
 >
     <form method="POST" wire:submit="onSave">
-        <div class="modal-content border-0 overflow-hidden" style="border-radius:18px;">
+        <div class="modal-content border-0 overflow-hidden" style="border-radius:18px;max-height:92vh;">
             <div class="modal-header border-0" style="background:#0b2b45;color:white;border-bottom:5px solid #65bce7 !important;">
                 <h4 class="modal-title fw-bold">{{ $menuItemData->name }}</h4>
                 <button
@@ -16,51 +17,53 @@
                 ></button>
             </div>
 
-            @if ($showThumb)
-                <div class="modal-top" style="background:#f5ecd8;padding:18px;border-bottom:5px solid #cf2f2a;">
-                    <img
-                        class="img-fluid d-block mx-auto"
-                        style="width:min(100%,720px);aspect-ratio:1/1;object-fit:contain;background:white;"
-                        src="{!! $menuItemData->getThumb([
-                              'width' => 900,
-                              'height' => 900,
-                              'fit' => 'contain',
-                            ]) !!}"
-                        alt="{{ $menuItemData->name }}"
-                    />
-                </div>
-            @endif
-
-            <div class="modal-body">
-                @if (strlen($menuItemData->description))
-                    <p class="text-muted fs-6">{!! $menuItemData->description !!}</p>
+            <div style="overflow:auto;">
+                @if ($showThumb)
+                    <div class="modal-top" style="background:#f5ecd8;padding:14px;border-bottom:5px solid #cf2f2a;">
+                        <img
+                            class="img-fluid d-block mx-auto"
+                            style="width:min(100%,560px);max-height:52vh;object-fit:contain;background:white;"
+                            src="{!! $menuItemData->getThumb([
+                                  'width' => 720,
+                                  'height' => 720,
+                                  'fit' => 'contain',
+                                ]) !!}"
+                            alt="{{ $menuItemData->name }}"
+                        />
+                    </div>
                 @endif
 
-                <input type="hidden" wire:model="menuId" />
-                <input type="hidden" wire:model="rowId" />
+                <div class="modal-body py-3">
+                    @if (strlen($menuItemData->description))
+                        <p class="text-muted fs-6 mb-3">{!! $menuItemData->description !!}</p>
+                    @endif
 
-                <div
-                    id="menu-options"
-                    class="menu-options"
-                    x-ref="item-options"
-                >
-                    @include('igniter-orange::includes.cartbox.item-options')
-                </div>
-                <x-igniter-orange::forms.error field="menuOptions" class="text-danger mb-3"/>
+                    <input type="hidden" wire:model="menuId" />
+                    <input type="hidden" wire:model="rowId" />
 
-                <div class="menu-comment">
-                    <textarea
-                        wire:model="comment"
-                        name="comment"
-                        class="form-control"
-                        rows="2"
-                        placeholder="@lang('igniter.cart::default.label_add_comment')"
-                    >{{ $cartItem ? $cartItem->comment : null }}</textarea>
-                    <x-igniter-orange::forms.error field="comment" class="text-danger"/>
+                    <div
+                        id="menu-options"
+                        class="menu-options"
+                        x-ref="item-options"
+                    >
+                        @include('igniter-orange::includes.cartbox.item-options')
+                    </div>
+                    <x-igniter-orange::forms.error field="menuOptions" class="text-danger mb-3"/>
+
+                    <div class="menu-comment">
+                        <textarea
+                            wire:model="comment"
+                            name="comment"
+                            class="form-control"
+                            rows="2"
+                            placeholder="@lang('igniter.cart::default.label_add_comment')"
+                        >{{ $cartItem ? $cartItem->comment : null }}</textarea>
+                        <x-igniter-orange::forms.error field="comment" class="text-danger"/>
+                    </div>
                 </div>
             </div>
 
-            <div class="modal-footer border-0" style="background:#fffaf0;">
+            <div class="modal-footer border-0 py-3" style="background:#fffaf0;">
                 <div class="row g-0 w-100">
                     <div class="col-sm-5 pb-3 pb-sm-0">
                         <div class="input-group input-group-lg">
